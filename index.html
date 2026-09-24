@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel do Gestor - Sistema de Ponto Facial W3C</title>
+  <!-- Pico.css -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="CSS/CUSTOM.css">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <header class="container-fluid">
+    <nav>
+      <ul>
+        <li><strong><i data-lucide="layout-dashboard"></i> Painel do Gestor</strong></li>
+      </ul>
+      <ul>
+        <li><a href="TERMINAL.html" role="button" class="outline"><i data-lucide="scan-face"></i> Abrir Terminal</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <!-- Abas / Navegação do Painel -->
+    <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+      <button id="tab-logs-btn" class="primary" style="flex: 1;"><i data-lucide="clipboard-list"></i> Registros de Ponto</button>
+      <button id="tab-employees-btn" class="outline" style="flex: 1;"><i data-lucide="users"></i> Gestão de Funcionários</button>
+      <button id="tab-alerts-btn" class="outline" style="flex: 1;"><i data-lucide="bell"></i> Alertas do Terminal</button>
+    </div>
+
+    <!-- Seção 1: Registros de Ponto -->
+    <section id="section-logs" class="card-custom">
+      <header style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0;"><i data-lucide="clipboard-list"></i> Histórico de Registros de Ponto</h3>
+        <button id="refresh-logs-btn" class="outlineSecondary small"><i data-lucide="refresh-cw"></i> Atualizar</button>
+      </header>
+
+      <div style="overflow-x: auto; margin-top: 1rem;">
+        <table style="width: 100%;">
+          <thead>
+            <tr>
+              <th>Data/Hora</th>
+              <th>Matrícula</th>
+              <th>Funcionário</th>
+              <th>Tipo</th>
+              <th>Status</th>
+              <th>Desvio</th>
+              <th>Modo</th>
+            </tr>
+          </thead>
+          <tbody id="logs-tbody">
+            <tr>
+              <td colspan="7" style="text-align: center; color: #94a3b8;"><i data-lucide="loader"></i> Carregando registros...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Seção 2: Gestão de Funcionários -->
+    <section id="section-employees" class="card-custom" style="display: none;">
+      <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h3 style="margin: 0;"><i data-lucide="users"></i> Cadastro e Gestão de Funcionários</h3>
+        <button id="open-add-employee-modal" class="primary"><i data-lucide="user-plus"></i> Novo Funcionário</button>
+      </header>
+
+      <div style="overflow-x: auto;">
+        <table style="width: 100%;">
+          <thead>
+            <tr>
+              <th>Matrícula</th>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Horário Entrada</th>
+              <th>Horário Saída</th>
+              <th>Biometria Facial</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="employees-tbody">
+            <tr>
+              <td colspan="8" style="text-align: center; color: #94a3b8;"><i data-lucide="loader"></i> Carregando funcionários...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Seção 3: Alertas do Terminal -->
+    <section id="section-alerts" class="card-custom" style="display: none;">
+      <header style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0;"><i data-lucide="bell"></i> Ocorrências e Alertas do Terminal</h3>
+        <button id="refresh-alerts-btn" class="outlineSecondary small"><i data-lucide="refresh-cw"></i> Atualizar</button>
+      </header>
+
+      <div style="overflow-x: auto; margin-top: 1rem;">
+        <table style="width: 100%;">
+          <thead>
+            <tr>
+              <th>Data/Hora</th>
+              <th>Terminal</th>
+              <th>Nível</th>
+              <th>Mensagem</th>
+              <th>Status</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody id="alerts-tbody">
+            <tr>
+              <td colspan="6" style="text-align: center; color: #94a3b8;"><i data-lucide="loader"></i> Carregando alertas...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal de Cadastro / Edição de Funcionário -->
+  <dialog id="employee-modal">
+    <article style="max-width: 600px; width: 100%;">
+      <header>
+        <button aria-label="Close" rel="prev" id="close-employee-modal"></button>
+        <h3><i data-lucide="user-plus"></i> Cadastrar Funcionário</h3>
+      </header>
+      <form id="employee-form">
+        <input type="hidden" id="emp-id">
+        <label for="emp-nome">Nome Completo</label>
+        <input type="text" id="emp-nome" required placeholder="Ex: Ana Silva">
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div>
+            <label for="emp-matricula">Matrícula</label>
+            <input type="text" id="emp-matricula" required placeholder="Ex: FUNC-002">
+          </div>
+          <div>
+            <label for="emp-email">E-mail</label>
+            <input type="email" id="emp-email" required placeholder="Ex: ana@empresa.com">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div>
+            <label for="emp-entrada">Horário Entrada</label>
+            <input type="time" id="emp-entrada" value="08:00" required>
+          </div>
+          <div>
+            <label for="emp-saida">Horário Saída</label>
+            <input type="time" id="emp-saida" value="17:00" required>
+          </div>
+        </div>
+
+        <!-- Seção de Captura de Biometria Facial para Cadastro -->
+        <fieldset style="border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+          <legend><strong>Biometria Facial</strong></legend>
+          <div class="camera-container" style="max-width: 320px; height: 240px; margin-bottom: 0.5rem;">
+            <video id="modal-video" autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+          </div>
+          <button type="button" id="capture-face-btn" class="secondary" style="width: 100%;"><i data-lucide="camera"></i> Capturar Vetor Facial</button>
+          <p id="face-status-text" style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem; text-align: center;">Vetor facial não capturado.</p>
+          <input type="hidden" id="emp-vetor-facial">
+        </fieldset>
+
+        <footer style="margin-top: 1.5rem; text-align: right;">
+          <button type="button" class="secondary" id="cancel-employee-btn">Cancelar</button>
+          <button type="submit" class="primary"><i data-lucide="save"></i> Salvar Funcionário</button>
+        </footer>
+      </form>
+    </article>
+  </dialog>
+
+  <script type="module" src="JS/DASHBOARD.js"></script>
+</body>
+</html>

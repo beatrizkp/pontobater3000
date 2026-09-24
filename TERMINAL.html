@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terminal de Ponto Facial - W3C</title>
+  <!-- Pico.css -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="CSS/CUSTOM.css">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <header class="container-fluid">
+    <nav>
+      <ul>
+        <li><strong><i data-lucide="scan-face"></i> Terminal de Ponto Facial</strong></li>
+      </ul>
+      <ul>
+        <li>
+          <span class="status-indicator" id="connection-status">
+            <span class="dot dot-online" id="status-dot"></span>
+            <span id="status-text">Online</span>
+          </span>
+        </li>
+        <li><a href="INDEX.html" role="button" class="outlineSecondary"><i data-lucide="layout-dashboard"></i> Painel do Gestor</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div class="grid-2">
+      <!-- Câmera e Reconhecimento -->
+      <article class="card-custom">
+        <header>
+          <h3 style="margin: 0;"><i data-lucide="camera"></i> Reconhecimento Facial</h3>
+        </header>
+
+        <div class="camera-container" id="camera-box">
+          <video id="video" autoplay muted playsinline></video>
+          <canvas id="overlay"></canvas>
+        </div>
+
+        <footer style="margin-top: 1rem; text-align: center;">
+          <div id="detection-msg" class="badge badge-info">
+            <i data-lucide="loader"></i> Inicializando modelos e câmera...
+          </div>
+        </footer>
+      </article>
+
+      <!-- Feedback e Histórico Recente -->
+      <article class="card-custom">
+        <header>
+          <h3 style="margin: 0;"><i data-lucide="clock"></i> Último Registro</h3>
+        </header>
+
+        <div id="result-box" style="padding: 1.5rem; text-align: center; border: 2px dashed var(--border-color); border-radius: 8px; margin-bottom: 1.5rem;">
+          <p style="color: #64748b; margin: 0;"><i data-lucide="user-check"></i> Posicione o rosto em frente à câmera para registrar o ponto.</p>
+        </div>
+
+        <h4><i data-lucide="history"></i> Registros Locais / Recentes</h4>
+        <div style="overflow-x: auto;">
+          <table style="width: 100%;">
+            <thead>
+              <tr>
+                <th>Funcionário</th>
+                <th>Tipo</th>
+                <th>Horário</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recent-logs-tbody">
+              <tr>
+                <td colspan="4" style="text-align: center; color: #94a3b8;">Nenhum registro no ciclo atual.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <script type="module" src="JS/TERMINAL.js"></script>
+</body>
+</html>
