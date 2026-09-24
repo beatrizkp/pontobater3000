@@ -35,6 +35,7 @@ Este arquivo registra a decomposição das tarefas e subtarefas do projeto, mant
   - [x] Implementar sinal sonoro sintetizado (Web Audio API) ao confirmar registro de ponto.
   - [x] Exibir contador visual de registros offline pendentes de sincronização.
   - [x] Adicionar seletor dropdown para seleção manual do funcionário que está batendo ponto.
+  - [ ] adicionar um botão que permite selecionar se o funcionario está entrando ou saindo
 
 ## 4. Painel do Gestor / Dashboard (`INDEX.html` e `JS/DASHBOARD.js`)
 - [x] **Relatórios de Ponto:**
