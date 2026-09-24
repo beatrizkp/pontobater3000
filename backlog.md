@@ -34,6 +34,7 @@ Este arquivo registra a decomposição das tarefas e subtarefas do projeto, mant
 - [x] **Melhorias de Experiência do Terminal:**
   - [x] Implementar sinal sonoro sintetizado (Web Audio API) ao confirmar registro de ponto.
   - [x] Exibir contador visual de registros offline pendentes de sincronização.
+  - [ ] Coloque um local de seleção onde aparece os funcionarios cadastrados no banco de dados
 
 ## 4. Painel do Gestor / Dashboard (`INDEX.html` e `JS/DASHBOARD.js`)
 - [x] **Relatórios de Ponto:**
