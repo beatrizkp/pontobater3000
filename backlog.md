@@ -43,6 +43,7 @@ Este arquivo registra a decomposição das tarefas e subtarefas do projeto, mant
 - [x] **Gestão de Alertas do Terminal:**
   - [x] Exibir alertas e falhas do terminal registrados na tabela `alertas_terminal`.
   - [x] Permitir marcar alertas como resolvidos.
+  - [ ] Coloque a opção de escolher o funcionario que está marcando o ponto
 
 ## 5. Validação e Testes
 - [x] Validar fluxo completo de registro de ponto facial em modo online.
