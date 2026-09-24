@@ -31,19 +31,25 @@ Este arquivo registra a decomposição das tarefas e subtarefas do projeto, mant
   - [x] Escutar eventos de reconexão (`online`) para sincronizar registros pendentes com a tabela `registros_ponto`.
 - [x] **Alertas e Monitoramento:**
   - [x] Registrar logs de eventos/falhas na tabela `alertas_terminal`.
+- [x] **Melhorias de Experiência do Terminal:**
+  - [x] Implementar sinal sonoro sintetizado (Web Audio API) ao confirmar registro de ponto.
+  - [x] Exibir contador visual de registros offline pendentes de sincronização.
 
 ## 4. Painel do Gestor / Dashboard (`INDEX.html` e `JS/DASHBOARD.js`)
 - [x] **Relatórios de Ponto:**
   - [x] Consultar e listar histórico de `registros_ponto` relacionando dados de `funcionarios`.
   - [x] Exibir status de frequência, horário registrado, minutos de desvio e modo de registro (online/offline).
+- [x] **Filtros e Exportação do Relatório:**
+  - [x] Implementar busca/filtro por nome de funcionário, matrícula ou status de frequência.
+  - [x] Implementar exportação dos registros de ponto para arquivo CSV.
 - [x] **Gestão de Funcionários:**
   - [x] Listar funcionários ativos/inativos.
   - [x] Formulário de cadastro de novos funcionários (nome, matrícula, e-mail, horários de entrada/saída).
   - [x] Captura e cadastro da biometria facial (`vetor_facial`) do funcionário.
+  - [x] Edição de dados e re-captura de biometria facial para funcionários existentes.
 - [x] **Gestão de Alertas do Terminal:**
   - [x] Exibir alertas e falhas do terminal registrados na tabela `alertas_terminal`.
   - [x] Permitir marcar alertas como resolvidos.
-  - [ ] Coloque a opção de escolher o funcionario que está marcando o ponto
 
 ## 5. Validação e Testes
 - [x] Validar fluxo completo de registro de ponto facial em modo online.

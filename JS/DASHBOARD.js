@@ -14,13 +14,17 @@ const logsTbody = document.getElementById('logs-tbody');
 const employeesTbody = document.getElementById('employees-tbody');
 const alertsTbody = document.getElementById('alerts-tbody');
 
-// Botões de Recarregar
+// Botões e Inputs de Filtro
 const refreshLogsBtn = document.getElementById('refresh-logs-btn');
 const refreshAlertsBtn = document.getElementById('refresh-alerts-btn');
+const exportCsvBtn = document.getElementById('export-csv-btn');
+const searchLogsInput = document.getElementById('search-logs-input');
+const filterStatusSelect = document.getElementById('filter-status-select');
 
 // Modal de Funcionário
 const openAddEmployeeModalBtn = document.getElementById('open-add-employee-modal');
 const employeeModal = document.getElementById('employee-modal');
+const modalTitle = document.getElementById('modal-title');
 const closeEmployeeModalBtn = document.getElementById('close-employee-modal');
 const cancelEmployeeBtn = document.getElementById('cancel-employee-btn');
 const employeeForm = document.getElementById('employee-form');
@@ -32,6 +36,7 @@ const empVetorFacialInput = document.getElementById('emp-vetor-facial');
 let faceapiModule = null;
 let cameraStream = null;
 let capturedDescriptor = null;
+let rawLogsData = []; // Cache local para filtros e exportação CSV
 
 function refreshIcons() {
   if (window.lucide) {
@@ -61,6 +66,88 @@ tabAlertsBtn.addEventListener('click', () => switchTab('alerts'));
 refreshLogsBtn.addEventListener('click', loadLogs);
 refreshAlertsBtn.addEventListener('click', loadAlerts);
 
+if (searchLogsInput) searchLogsInput.addEventListener('input', renderFilteredLogs);
+if (filterStatusSelect) filterStatusSelect.addEventListener('change', renderFilteredLogs);
+
+// Renderizar Logs Filtrados em Memória
+function renderFilteredLogs() {
+  const query = (searchLogsInput ? searchLogsInput.value : '').toLowerCase().trim();
+  const selectedStatus = filterStatusSelect ? filterStatusSelect.value : '';
+
+  const filtered = rawLogsData.filter(log => {
+    const nome = (log.funcionarios?.nome || '').toLowerCase();
+    const matricula = (log.funcionarios?.matricula || '').toLowerCase();
+
+    const matchesSearch = !query || nome.includes(query) || matricula.includes(query);
+    const matchesStatus = !selectedStatus || log.status_frequencia === selectedStatus;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  if (filtered.length === 0) {
+    logsTbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8;">Nenhum registro encontrado para o filtro aplicado.</td></tr>';
+    refreshIcons();
+    return;
+  }
+
+  logsTbody.innerHTML = filtered.map(log => {
+    const dt = new Date(log.timestamp_registro);
+    const dataHoraStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString();
+
+    let statusBadge = 'badge-success';
+    if (log.status_frequencia === 'ATRASO') statusBadge = 'badge-warning';
+    if (log.status_frequencia === 'SAIDA_ANTECIPADA' || log.status_frequencia === 'FALTA') statusBadge = 'badge-danger';
+
+    return `
+      <tr>
+        <td>${dataHoraStr}</td>
+        <td>${log.funcionarios ? log.funcionarios.matricula : 'N/A'}</td>
+        <td><strong>${log.funcionarios ? log.funcionarios.nome : 'Desconhecido'}</strong></td>
+        <td><span class="badge ${log.tipo === 'ENTRADA' ? 'badge-info' : 'badge-success'}">${log.tipo}</span></td>
+        <td><span class="badge ${statusBadge}">${log.status_frequencia}</span></td>
+        <td>${log.minutos_desvio > 0 ? `${log.minutos_desvio} min` : '-'}</td>
+        <td>${log.modo_offline ? '<span class="badge badge-warning">Offline</span>' : '<span class="badge badge-info">Online</span>'}</td>
+      </tr>
+    `;
+  }).join('');
+
+  refreshIcons();
+}
+
+// Exportar Registros de Ponto para CSV
+if (exportCsvBtn) {
+  exportCsvBtn.addEventListener('click', () => {
+    if (!rawLogsData || rawLogsData.length === 0) {
+      alert('Nenhum registro disponível para exportação.');
+      return;
+    }
+
+    const headers = ['Data/Hora', 'Matricula', 'Funcionario', 'Tipo', 'Status', 'Desvio (min)', 'Modo'];
+    const rows = rawLogsData.map(log => {
+      const dt = new Date(log.timestamp_registro);
+      const dataHoraStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString();
+      return [
+        `"${dataHoraStr}"`,
+        `"${log.funcionarios?.matricula || 'N/A'}"`,
+        `"${log.funcionarios?.nome || 'Desconhecido'}"`,
+        `"${log.tipo}"`,
+        `"${log.status_frequencia}"`,
+        log.minutos_desvio || 0,
+        log.modo_offline ? '"Offline"' : '"Online"'
+      ].join(',');
+    });
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `registros_ponto_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+}
+
 // Carregar Registros de Ponto do Supabase
 async function loadLogs() {
   logsTbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8;"><i data-lucide="loader"></i> Carregando registros...</td></tr>';
@@ -74,34 +161,8 @@ async function loadLogs() {
 
     if (error) throw error;
 
-    if (!data || data.length === 0) {
-      logsTbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8;">Nenhum registro de ponto encontrado.</td></tr>';
-      refreshIcons();
-      return;
-    }
-
-    logsTbody.innerHTML = data.map(log => {
-      const dt = new Date(log.timestamp_registro);
-      const dataHoraStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString();
-
-      let statusBadge = 'badge-success';
-      if (log.status_frequencia === 'ATRASO') statusBadge = 'badge-warning';
-      if (log.status_frequencia === 'SAIDA_ANTECIPADA' || log.status_frequencia === 'FALTA') statusBadge = 'badge-danger';
-
-      return `
-        <tr>
-          <td>${dataHoraStr}</td>
-          <td>${log.funcionarios ? log.funcionarios.matricula : 'N/A'}</td>
-          <td><strong>${log.funcionarios ? log.funcionarios.nome : 'Desconhecido'}</strong></td>
-          <td><span class="badge ${log.tipo === 'ENTRADA' ? 'badge-info' : 'badge-success'}">${log.tipo}</span></td>
-          <td><span class="badge ${statusBadge}">${log.status_frequencia}</span></td>
-          <td>${log.minutos_desvio > 0 ? `${log.minutos_desvio} min` : '-'}</td>
-          <td>${log.modo_offline ? '<span class="badge badge-warning">Offline</span>' : '<span class="badge badge-info">Online</span>'}</td>
-        </tr>
-      `;
-    }).join('');
-
-    refreshIcons();
+    rawLogsData = data || [];
+    renderFilteredLogs();
   } catch (err) {
     console.error('Erro ao carregar logs:', err);
     logsTbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #dc2626;">Erro ao carregar registros: ${err.message}</td></tr>`;
@@ -129,6 +190,7 @@ async function loadEmployees() {
 
     employeesTbody.innerHTML = data.map(emp => {
       const hasBiometrics = emp.vetor_facial && Array.isArray(emp.vetor_facial) && emp.vetor_facial.length > 0;
+      const empJson = JSON.stringify(emp).replace(/'/g, "&apos;");
       return `
         <tr>
           <td>${emp.matricula}</td>
@@ -147,6 +209,7 @@ async function loadEmployees() {
               : '<span class="badge badge-warning">Inativo</span>'}
           </td>
           <td>
+            <button onclick='editEmployee(${empJson})' class="outlineSmall primary" style="margin-right: 0.25rem;">Editar</button>
             <button onclick="toggleEmployeeStatus('${emp.id}', ${!emp.ativo})" class="outlineSmall secondary">
               ${emp.ativo ? 'Desativar' : 'Ativar'}
             </button>
@@ -161,6 +224,30 @@ async function loadEmployees() {
     employeesTbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #dc2626;">Erro ao carregar funcionários: ${err.message}</td></tr>`;
   }
 }
+
+// Editar Funcionário Existente
+window.editEmployee = async function(emp) {
+  employeeForm.reset();
+  document.getElementById('emp-id').value = emp.id;
+  document.getElementById('emp-nome').value = emp.nome;
+  document.getElementById('emp-matricula').value = emp.matricula;
+  document.getElementById('emp-email').value = emp.email;
+  document.getElementById('emp-entrada').value = emp.horario_entrada.slice(0, 5);
+  document.getElementById('emp-saida').value = emp.horario_saida.slice(0, 5);
+
+  capturedDescriptor = emp.vetor_facial || null;
+  if (capturedDescriptor) {
+    faceStatusText.textContent = 'Biometria existente mantida (clique para re-capturar).';
+    faceStatusText.style.color = '#16a34a';
+  } else {
+    faceStatusText.textContent = 'Vetor facial não cadastrado.';
+    faceStatusText.style.color = '#64748b';
+  }
+
+  modalTitle.innerHTML = '<i data-lucide="user-check"></i> Editar Funcionário';
+  employeeModal.showModal();
+  await startModalCamera();
+};
 
 // Alterar Status do Funcionário (Ativo/Inativo)
 window.toggleEmployeeStatus = async function(id, newStatus) {
@@ -238,10 +325,12 @@ window.resolveAlert = async function(id) {
   }
 };
 
-// Abrir Modal de Cadastro
+// Abrir Modal de Novo Cadastro
 openAddEmployeeModalBtn.addEventListener('click', async () => {
   employeeForm.reset();
+  document.getElementById('emp-id').value = '';
   capturedDescriptor = null;
+  modalTitle.innerHTML = '<i data-lucide="user-plus"></i> Cadastrar Funcionário';
   faceStatusText.textContent = 'Vetor facial não capturado.';
   faceStatusText.style.color = '#64748b';
   employeeModal.showModal();
@@ -306,34 +395,47 @@ captureFaceBtn.addEventListener('click', async () => {
   }
 });
 
-// Submissão do Formulário de Funcionário
+// Submissão do Formulário de Funcionário (Inclusão e Edição)
 employeeForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
+  const empId = document.getElementById('emp-id').value;
   const nome = document.getElementById('emp-nome').value;
   const matricula = document.getElementById('emp-matricula').value;
   const email = document.getElementById('emp-email').value;
   const horario_entrada = document.getElementById('emp-entrada').value + ':00';
   const horario_saida = document.getElementById('emp-saida').value + ':00';
 
-  try {
-    const { error } = await supabase.from('funcionarios').insert([{
-      nome,
-      matricula,
-      email,
-      horario_entrada,
-      horario_saida,
-      vetor_facial: capturedDescriptor || null,
-      ativo: true
-    }]);
+  const payload = {
+    nome,
+    matricula,
+    email,
+    horario_entrada,
+    horario_saida,
+    vetor_facial: capturedDescriptor || null
+  };
 
-    if (error) throw error;
+  try {
+    if (empId) {
+      const { error } = await supabase
+        .from('funcionarios')
+        .update(payload)
+        .eq('id', empId);
+      if (error) throw error;
+      alert('Funcionário atualizado com sucesso!');
+    } else {
+      payload.ativo = true;
+      const { error } = await supabase
+        .from('funcionarios')
+        .insert([payload]);
+      if (error) throw error;
+      alert('Funcionário cadastrado com sucesso!');
+    }
 
     closeModal();
     await loadEmployees();
-    alert('Funcionário cadastrado com sucesso!');
   } catch (err) {
-    alert('Erro ao cadastrar funcionário: ' + err.message);
+    alert('Erro ao salvar funcionário: ' + err.message);
   }
 });
 

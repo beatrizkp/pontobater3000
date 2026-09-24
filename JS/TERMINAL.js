@@ -15,6 +15,7 @@ const resultBox = document.getElementById('result-box');
 const recentLogsTbody = document.getElementById('recent-logs-tbody');
 const statusDot = document.getElementById('status-dot');
 const statusText = document.getElementById('status-text');
+const offlineCountBadge = document.getElementById('offline-count-badge');
 
 let faceapiModule = null;
 let activeEmployees = [];
@@ -31,6 +32,22 @@ function refreshIcons() {
   }
 }
 
+// Atualizar contador de registros offline pendentes
+async function updateOfflineBadgeCount() {
+  if (!offlineCountBadge) return;
+  try {
+    const pendingCount = await db.registrosOffline.where('synced').equals(0).count();
+    if (pendingCount > 0) {
+      offlineCountBadge.textContent = `${pendingCount} pendente(s)`;
+      offlineCountBadge.style.display = 'inline-flex';
+    } else {
+      offlineCountBadge.style.display = 'none';
+    }
+  } catch (err) {
+    console.warn('Erro ao ler contagem offline:', err);
+  }
+}
+
 // Atualizar indicador de Conexão Online/Offline
 function updateConnectionStatus() {
   if (navigator.onLine) {
@@ -40,11 +57,38 @@ function updateConnectionStatus() {
   } else {
     statusDot.className = 'dot dot-offline';
     statusText.textContent = 'Offline';
+    updateOfflineBadgeCount();
   }
 }
 
 window.addEventListener('online', updateConnectionStatus);
 window.addEventListener('offline', updateConnectionStatus);
+
+// Tocar bip sonoro sintetizado usando Web Audio API ao registrar ponto
+function playSuccessChime() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
+
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+  } catch (err) {
+    console.warn('Não foi possível reproduzir aviso sonoro:', err);
+  }
+}
 
 // Enviar alertas para a tabela `alertas_terminal`
 async function sendTerminalAlert(level, message) {
@@ -99,6 +143,7 @@ async function syncOfflineRecords() {
         await db.registrosOffline.update(rec.id, { synced: 1 });
       }
     }
+    await updateOfflineBadgeCount();
     await sendTerminalAlert('INFO', `Sincronizados ${pendingRecords.length} registros salvos offline.`);
   } catch (err) {
     console.error('Erro ao sincronizar registros offline:', err);
@@ -252,8 +297,12 @@ async function processEmployeeCheckin(employee) {
         hash_contingencia: hashHex,
         synced: 0
       });
+      await updateOfflineBadgeCount();
     }
   }
+
+  // Tocar sinal sonoro
+  playSuccessChime();
 
   // Atualizar UI de resultado
   let badgeClass = 'badge-success';

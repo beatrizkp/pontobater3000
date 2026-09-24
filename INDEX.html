@@ -33,12 +33,26 @@
 
     <!-- Seção 1: Registros de Ponto -->
     <section id="section-logs" class="card-custom">
-      <header style="display: flex; justify-content: space-between; align-items: center;">
+      <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
         <h3 style="margin: 0;"><i data-lucide="clipboard-list"></i> Histórico de Registros de Ponto</h3>
-        <button id="refresh-logs-btn" class="outlineSecondary small"><i data-lucide="refresh-cw"></i> Atualizar</button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="export-csv-btn" class="outlineSecondary small"><i data-lucide="download"></i> Exportar CSV</button>
+          <button id="refresh-logs-btn" class="outlineSecondary small"><i data-lucide="refresh-cw"></i> Atualizar</button>
+        </div>
       </header>
 
-      <div style="overflow-x: auto; margin-top: 1rem;">
+      <!-- Filtros de Busca -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+        <input type="text" id="search-logs-input" placeholder="Buscar por funcionário ou matrícula..." style="margin-bottom: 0;">
+        <select id="filter-status-select" style="margin-bottom: 0;">
+          <option value="">Todos os Status</option>
+          <option value="NORMAL">NORMAL</option>
+          <option value="ATRASO">ATRASO</option>
+          <option value="SAIDA_ANTECIPADA">SAÍDA ANTECIPADA</option>
+        </select>
+      </div>
+
+      <div style="overflow-x: auto;">
         <table style="width: 100%;">
           <thead>
             <tr>
@@ -124,7 +138,7 @@
     <article style="max-width: 600px; width: 100%;">
       <header>
         <button aria-label="Close" rel="prev" id="close-employee-modal"></button>
-        <h3><i data-lucide="user-plus"></i> Cadastrar Funcionário</h3>
+        <h3 id="modal-title"><i data-lucide="user-plus"></i> Cadastrar Funcionário</h3>
       </header>
       <form id="employee-form">
         <input type="hidden" id="emp-id">
