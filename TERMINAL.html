@@ -38,6 +38,14 @@
           <h3 style="margin: 0;"><i data-lucide="camera"></i> Reconhecimento Facial</h3>
         </header>
 
+        <!-- Seleção do Funcionário que está batendo ponto -->
+        <div style="margin-bottom: 1rem;">
+          <label for="employee-select"><strong><i data-lucide="user"></i> Selecione o Funcionário:</strong></label>
+          <select id="employee-select" style="margin-bottom: 0;">
+            <option value="">Detecção Automática Facial ou Selecione...</option>
+          </select>
+        </div>
+
         <div class="camera-container" id="camera-box">
           <video id="video" autoplay muted playsinline></video>
           <canvas id="overlay"></canvas>
@@ -57,7 +65,7 @@
         </header>
 
         <div id="result-box" style="padding: 1.5rem; text-align: center; border: 2px dashed var(--border-color); border-radius: 8px; margin-bottom: 1.5rem;">
-          <p style="color: #64748b; margin: 0;"><i data-lucide="user-check"></i> Posicione o rosto em frente à câmera para registrar o ponto.</p>
+          <p style="color: #64748b; margin: 0;"><i data-lucide="user-check"></i> Posicione o rosto em frente à câmera ou selecione seu nome para registrar o ponto.</p>
         </div>
 
         <h4><i data-lucide="history"></i> Registros Locais / Recentes</h4>

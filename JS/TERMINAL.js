@@ -16,11 +16,12 @@ const recentLogsTbody = document.getElementById('recent-logs-tbody');
 const statusDot = document.getElementById('status-dot');
 const statusText = document.getElementById('status-text');
 const offlineCountBadge = document.getElementById('offline-count-badge');
+const employeeSelect = document.getElementById('employee-select');
 
 let faceapiModule = null;
 let activeEmployees = [];
 let isProcessingRecognition = false;
-let lastRecordedTime = {}; // Cooldown de registro por funcionário (5 min)
+let lastRecordedTime = {}; // Cooldown de registro por funcionário
 
 // Identificador único do Terminal
 const TERMINAL_ID = 'TERMINAL_01';
@@ -105,6 +106,18 @@ async function sendTerminalAlert(level, message) {
   }
 }
 
+// Populate Employee Dropdown
+function populateEmployeeDropdown() {
+  if (!employeeSelect) return;
+  employeeSelect.innerHTML = '<option value="">Detecção Automática Facial ou Selecione...</option>';
+  activeEmployees.forEach(emp => {
+    const opt = document.createElement('option');
+    opt.value = emp.id;
+    opt.textContent = `${emp.nome} (${emp.matricula})`;
+    employeeSelect.appendChild(opt);
+  });
+}
+
 // Carregar funcionários ativos e vetores faciais do Supabase
 async function loadActiveEmployees() {
   try {
@@ -115,6 +128,7 @@ async function loadActiveEmployees() {
 
     if (error) throw error;
     activeEmployees = data || [];
+    populateEmployeeDropdown();
   } catch (err) {
     console.error('Erro ao carregar funcionários:', err);
     sendTerminalAlert('WARNING', 'Erro ao carregar lista de funcionários: ' + err.message);
@@ -197,7 +211,6 @@ async function initBiometrics() {
 
 // Lógica para determinar Entrada/Saída, Tolerância e Atrasos
 function calculatePointStatus(employee, now = new Date()) {
-  const timeStr = now.toTimeString().split(' ')[0]; // HH:MM:SS
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
   const [inH, inM] = employee.horario_entrada.split(':').map(Number);
@@ -216,7 +229,7 @@ function calculatePointStatus(employee, now = new Date()) {
     targetMinutes = exitTargetMinutes;
   }
 
-  const diffMinutes = currentMinutes - targetMinutes; // positivo = atraso / saída após o horário
+  const diffMinutes = currentMinutes - targetMinutes;
   const absDiff = Math.abs(diffMinutes);
 
   let status_frequencia = 'NORMAL';
@@ -242,7 +255,7 @@ function euclideanDistance(arr1, arr2) {
   );
 }
 
-// Processar Registro de Ponto após Reconhecimento
+// Processar Registro de Ponto
 async function processEmployeeCheckin(employee) {
   const now = new Date();
   const lastTime = lastRecordedTime[employee.id];
@@ -275,6 +288,7 @@ async function processEmployeeCheckin(employee) {
       hash_contingencia: hashHex,
       synced: 0
     });
+    await updateOfflineBadgeCount();
   } else {
     try {
       await supabase.from('registros_ponto').insert([{
@@ -336,9 +350,20 @@ async function processEmployeeCheckin(employee) {
   recentLogsTbody.insertBefore(tr, recentLogsTbody.firstChild);
 }
 
-// Loop contínuo de detecção de rosto
+// Loop contínuo de detecção de rosto e/ou seleção manual
 function startFaceDetectionLoop() {
   setInterval(async () => {
+    // Verificar se há seleção manual de funcionário no dropdown
+    if (employeeSelect && employeeSelect.value) {
+      const selectedId = employeeSelect.value;
+      const employee = activeEmployees.find(e => e.id === selectedId);
+      if (employee) {
+        employeeSelect.value = ''; // Reset dropdown
+        await processEmployeeCheckin(employee);
+        return;
+      }
+    }
+
     if (!faceapiModule || video.paused || video.ended || isProcessingRecognition) return;
 
     overlay.width = video.videoWidth;
@@ -359,7 +384,6 @@ function startFaceDetectionLoop() {
         for (const detection of detections) {
           const descriptor = Array.from(detection.descriptor);
 
-          // Buscar funcionário correspondente por vetor_facial (Threshold 0.5)
           let matchedEmployee = null;
           let minDistance = 0.5;
 
@@ -384,6 +408,19 @@ function startFaceDetectionLoop() {
       isProcessingRecognition = false;
     }
   }, 1000);
+}
+
+// Listener para alteração direta do dropdown de funcionários
+if (employeeSelect) {
+  employeeSelect.addEventListener('change', async () => {
+    if (!employeeSelect.value) return;
+    const selectedId = employeeSelect.value;
+    const employee = activeEmployees.find(e => e.id === selectedId);
+    if (employee) {
+      employeeSelect.value = '';
+      await processEmployeeCheckin(employee);
+    }
+  });
 }
 
 // Inicialização Geral
