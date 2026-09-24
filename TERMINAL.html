@@ -38,6 +38,16 @@
           <h3 style="margin: 0;"><i data-lucide="camera"></i> Reconhecimento Facial</h3>
         </header>
 
+        <!-- Seleção do Modo (AUTO, ENTRADA, SAÍDA) -->
+        <div style="margin-bottom: 1rem;">
+          <label><strong><i data-lucide="arrow-left-right"></i> Tipo de Registro:</strong></label>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+            <button id="btn-mode-auto" class="primary small" style="flex: 1;"><i data-lucide="cpu"></i> Automático</button>
+            <button id="btn-mode-entrada" class="outline small" style="flex: 1;"><i data-lucide="log-in"></i> Entrada</button>
+            <button id="btn-mode-saida" class="outline small" style="flex: 1;"><i data-lucide="log-out"></i> Saída</button>
+          </div>
+        </div>
+
         <!-- Seleção do Funcionário que está batendo ponto -->
         <div style="margin-bottom: 1rem;">
           <label for="employee-select"><strong><i data-lucide="user"></i> Selecione o Funcionário:</strong></label>

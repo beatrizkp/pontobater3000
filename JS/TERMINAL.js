@@ -18,6 +18,12 @@ const statusText = document.getElementById('status-text');
 const offlineCountBadge = document.getElementById('offline-count-badge');
 const employeeSelect = document.getElementById('employee-select');
 
+// Botões do Seletor de Modo
+const btnModeAuto = document.getElementById('btn-mode-auto');
+const btnModeEntrada = document.getElementById('btn-mode-entrada');
+const btnModeSaida = document.getElementById('btn-mode-saida');
+
+let selectedMode = 'AUTO'; // AUTO, ENTRADA, SAIDA
 let faceapiModule = null;
 let activeEmployees = [];
 let isProcessingRecognition = false;
@@ -31,6 +37,22 @@ function refreshIcons() {
   if (window.lucide) {
     window.lucide.createIcons();
   }
+}
+
+// Configurar escutadores para os botões de modo (AUTO, ENTRADA, SAIDA)
+function setupModeToggleButtons() {
+  if (!btnModeAuto || !btnModeEntrada || !btnModeSaida) return;
+
+  btnModeAuto.addEventListener('click', () => setMode('AUTO'));
+  btnModeEntrada.addEventListener('click', () => setMode('ENTRADA'));
+  btnModeSaida.addEventListener('click', () => setMode('SAIDA'));
+}
+
+function setMode(mode) {
+  selectedMode = mode;
+  btnModeAuto.className = mode === 'AUTO' ? 'primary small' : 'outline small';
+  btnModeEntrada.className = mode === 'ENTRADA' ? 'primary small' : 'outline small';
+  btnModeSaida.className = mode === 'SAIDA' ? 'primary small' : 'outline small';
 }
 
 // Atualizar contador de registros offline pendentes
@@ -219,16 +241,14 @@ function calculatePointStatus(employee, now = new Date()) {
   const [outH, outM] = employee.horario_saida.split(':').map(Number);
   const exitTargetMinutes = outH * 60 + outM;
 
-  const midDayMinutes = (entryTargetMinutes + exitTargetMinutes) / 2;
+  let tipo = selectedMode;
 
-  let tipo = 'ENTRADA';
-  let targetMinutes = entryTargetMinutes;
-
-  if (currentMinutes > midDayMinutes) {
-    tipo = 'SAIDA';
-    targetMinutes = exitTargetMinutes;
+  if (selectedMode === 'AUTO') {
+    const midDayMinutes = (entryTargetMinutes + exitTargetMinutes) / 2;
+    tipo = currentMinutes > midDayMinutes ? 'SAIDA' : 'ENTRADA';
   }
 
+  const targetMinutes = tipo === 'ENTRADA' ? entryTargetMinutes : exitTargetMinutes;
   const diffMinutes = currentMinutes - targetMinutes;
   const absDiff = Math.abs(diffMinutes);
 
@@ -426,6 +446,7 @@ if (employeeSelect) {
 // Inicialização Geral
 window.addEventListener('DOMContentLoaded', async () => {
   refreshIcons();
+  setupModeToggleButtons();
   updateConnectionStatus();
   await loadActiveEmployees();
   await startCamera();
